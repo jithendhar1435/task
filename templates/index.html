@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare Application</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .buttons {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .buttons button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .buttons button:hover {
+            background-color: #0056b3;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+            padding-top: 60px;
+        }
+        .modal form {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 8px;
+        }
+        .result {
+            margin-top: 20px;
+        }
+        .result h2 {
+            color: #333;
+        }
+        .result p {
+            white-space: pre-wrap;
+            background: #f9f9f9;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Healthcare Application</h1>
+        <div class="buttons">
+            <button onclick="document.getElementById('ocrUpload').style.display='block'">OCR</button>
+            <button onclick="document.getElementById('chatbotModal').style.display='block'">Chatbot</button>
+        </div>
+        <div id="ocrUpload" class="modal">
+            <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
+                <input type="file" name="file" accept=".pdf" required>
+                <button type="submit">Upload PDF</button>
+            </form>
+        </div>
+        <div id="chatbotModal" class="modal">
+            <form id="chatbotForm">
+                <label for="symptom">Enter Symptom:</label>
+                <input type="text" id="symptom" name="symptom" required>
+                <label for="days">Number of days:</label>
+                <input type="number" id="days" name="days" required>
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+        <div class="result" id="chatbotResult"></div>
+        {% if extracted_text %}
+            <div class="result">
+                <h2>Extracted Text:</h2>
+                <p>{{ extracted_text }}</p>
+            </div>
+        {% endif %}
+    </div>
+    <script>
+        window.onclick = function(event) {
+            var ocrModal = document.getElementById('ocrUpload');
+            var chatbotModal = document.getElementById('chatbotModal');
+            if (event.target == ocrModal) {
+                ocrModal.style.display = "none";
+            }
+            if (event.target == chatbotModal) {
+                chatbotModal.style.display = "none";
+            }
+        }
+
+        document.getElementById('chatbotForm').onsubmit = function(event) {
+            event.preventDefault();
+            const symptom = document.getElementById('symptom').value;
+            const days = document.getElementById('days').value;
+
+            fetch('/chatbot', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ symptom: symptom, days: days })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultDiv = document.getElementById('chatbotResult');
+                resultDiv.innerHTML = `
+                    <h2>Diagnosis Result</h2>
+                    <p><strong>Disease:</strong> ${data.disease}</p>
+                    <p><strong>Severity:</strong> ${data.additional_info.severity}</p>
+                    <p><strong>Description:</strong> ${data.additional_info.description}</p>
+                    <p><strong>Precautions:</strong> ${data.additional_info.precautions.join(', ')}</p>
+                    <p><strong>Advice:</strong> ${data.advice}</p>
+                `;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const resultDiv = document.getElementById('chatbotResult');
+                resultDiv.innerHTML = '<p>An error occurred. Please try again.</p>';
+            });
+
+            chatbotModal.style.display = "none";
+        }
+    </script>
+</body>
+</html>
+
