@@ -44,8 +44,7 @@ Procedure to Execute the Project
 1. Clone the Repository
 First, clone the repository to your local machine:
 
-Code
-git clone https://github.com/Vamsi-Agnihotram-18/VITAVISUALS.git
+
 
 cd VITAVISUALS
 2. Set Up a Virtual Environment
